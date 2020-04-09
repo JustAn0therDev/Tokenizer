@@ -2,11 +2,11 @@
 
 namespace Tokenizer.Models
 {
-    public interface IAuthContainerModel
+    public interface IAuthJWTContainerModel
     {
         string SecretKey { get; set; }
         string SecurityAlgorithm { get; set; }
         int ExpirationInMinutes { get; set; }
-        Claim[] Claims { get; set; }
+        Claim[] ArrayOfClaims { get; set; }
     }
 }

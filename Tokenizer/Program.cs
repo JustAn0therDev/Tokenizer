@@ -11,10 +11,10 @@ namespace Tokenizer
         {
             try
             {
-                IAuthContainerModel model = new JWTContainer(GenerateArrayOfClaimsFromInput());
-                IAuthService authService = new JWTService(model.SecretKey, model);
-                string token = authService.GenerateToken();
-                WriteTokenOnConsole(token);
+                IAuthJWTContainerModel authJWTContainerModel = new JWTContainer(GenerateArrayOfClaimsFromInputWithFixedLength());
+                IAuthJWTService authJWTService = new JWTService(authJWTContainerModel.SecretKey, authJWTContainerModel);
+                string generatedJWTToken = authJWTService.GenerateToken();
+                WriteTokenOnConsole(generatedJWTToken);
             }
             catch (Exception ex)
             {
@@ -22,20 +22,28 @@ namespace Tokenizer
             }
         }
 
-        static Claim[] GenerateArrayOfClaimsFromInput()
+        private static Claim[] GenerateArrayOfClaimsFromInputWithFixedLength()
         {
             Console.Write("How many values do you want in your payload (numbers only) ? ");
             int numberOfValuesInPayload = int.Parse(Console.ReadLine());
+
             Claim[] arrayOfClaims = new Claim[numberOfValuesInPayload];
-            for (int i = 0; i < numberOfValuesInPayload; i++)
+
+            PushValuesInArrayOfClaims(arrayOfClaims);
+
+            return arrayOfClaims;
+        }
+
+        private static void PushValuesInArrayOfClaims(Claim[] arrayOfClaims)
+        {
+            for (int i = 0; i < arrayOfClaims.Length; i++)
             {
                 Console.Write($"Insert the number {i + 1} value you want to generate a JWT Token with: ");
                 arrayOfClaims[i] = new Claim(ClaimTypes.Name, Console.ReadLine());
             }
-            return arrayOfClaims;
         }
 
-        static void WriteTokenOnConsole(string token)
+        private static void WriteTokenOnConsole(string token)
         {
             Console.WriteLine();
             Console.WriteLine("Your token was successfully generated.");

@@ -1,16 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Security.Claims;
-using Tokenizer.Models;
+﻿using Tokenizer.Models;
 
 namespace Tokenizer.Services
 {
-    public interface IAuthService
+    public interface IAuthJWTService
     {
         string SecretKey { get; set; }
-        IAuthContainerModel AuthContainerModel { get; set; }
-        bool IsTokenValid(string token);
+        IAuthJWTContainerModel JWTContainerModel { get; set; }
         void IsClaimArrayValid();
         string GenerateToken();
-        List<Claim> GetTokenClaims(string token);
     }
 }

@@ -1,48 +1,68 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using Tokenizer.Models;
 
 namespace Tokenizer.Services
 {
-    public class JWTService : IAuthService
+    public class JWTService : IAuthJWTService
     {
-        public IAuthContainerModel AuthContainerModel { get; set; }
+        #region Private Properties
+
+        private JwtSecurityTokenHandler JwtSecurityTokenHandler { get; set; } = new JwtSecurityTokenHandler();
+        private SecurityTokenDescriptor SecurityTokenDescriptor
+        {
+            get
+            {
+                return new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(JWTContainerModel.ArrayOfClaims),
+                    Expires = DateTime.UtcNow.AddMinutes(JWTContainerModel.ExpirationInMinutes),
+                    SigningCredentials = new SigningCredentials(GetSymmetricSecurityKey(), JWTContainerModel.SecurityAlgorithm)
+                };
+            }
+        }
+
+        #endregion
+
+        #region Public Properties
+
+        public IAuthJWTContainerModel JWTContainerModel { get; set; }
         public string SecretKey { get; set; }
 
-        public JWTService(string secretKey, IAuthContainerModel containerModel)
+        #endregion
+
+        public JWTService(string secretKey, IAuthJWTContainerModel jwtContainerModel)
         {
             SecretKey = secretKey;
-            AuthContainerModel = containerModel;
+            JWTContainerModel = jwtContainerModel;
+        }
+
+        private SecurityKey GetSymmetricSecurityKey()
+        {
+            byte[] byteArrayToCreateSymmetricKey = Convert.FromBase64String(SecretKey);
+            return new SymmetricSecurityKey(byteArrayToCreateSymmetricKey);
         }
 
         public string GenerateToken()
         {
             IsClaimArrayValid();
-
-            SecurityTokenDescriptor securityTokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(AuthContainerModel.Claims),
-                Expires = DateTime.UtcNow.AddMinutes(AuthContainerModel.ExpirationInMinutes),
-                SigningCredentials = new SigningCredentials(GetSymmetricSecurityKey(), AuthContainerModel.SecurityAlgorithm)
-            };
-
-            JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken securityToken = jwtSecurityTokenHandler.CreateToken(securityTokenDescriptor);
-            string token = jwtSecurityTokenHandler.WriteToken(securityToken);
-
-            return token;
+            SecurityToken securityToken = JwtSecurityTokenHandler.CreateToken(SecurityTokenDescriptor);
+            return JwtSecurityTokenHandler.WriteToken(securityToken);
         }
 
         public void IsClaimArrayValid()
         {
-            if (AuthContainerModel.Claims == null || AuthContainerModel.Claims.Length == 0)
+            if (JWTContainerModel.ArrayOfClaims == null || JWTContainerModel.ArrayOfClaims.Length == 0)
                 throw new ArgumentNullException("A list of claims must be provided for a JWT token to be generated.");
+         
+            CheckAllClaimsInClaimArray();
+        }
 
-            foreach (Claim claim in AuthContainerModel.Claims)
+        private void CheckAllClaimsInClaimArray()
+        {
+            foreach (Claim claim in JWTContainerModel.ArrayOfClaims)
             {
                 switch (claim.Type)
                 {
@@ -52,64 +72,15 @@ namespace Tokenizer.Services
                         break;
                     case ClaimTypes.Name:
                         if (string.IsNullOrWhiteSpace(claim.Value))
-                            throw new ArgumentException("Value is not valid for e-mail claim type.");
+                            throw new ArgumentException("Empty value is not valid for this claim type.");
                         break;
                     case ClaimTypes.Role:
-                        if (string.IsNullOrWhiteSpace(claim.Value))
-                            throw new ArgumentException("Value is not valid for e-mail claim type.");
+                        if (claim.Value.IndexOf(" ") > -1)
+                            throw new ArgumentException("Space separated value is not valid for role claim type.");
                         break;
                     default:
                         throw new ArgumentException("ClaimType not supported for verification.");
                 }
-            }
-        }
-
-        public bool IsTokenValid(string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-                throw new ArgumentException("A token has not been provided");
-
-            TokenValidationParameters tokenValidationParameters = GetTokenValidationParameters();
-            JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-
-            jwtSecurityTokenHandler
-                .ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-            return true;
-        }
-
-        private TokenValidationParameters GetTokenValidationParameters()
-        {
-            return new TokenValidationParameters()
-            {
-                ValidateIssuer = false,
-                ValidateAudience = false,
-                IssuerSigningKey = GetSymmetricSecurityKey()
-            };
-        }
-
-        private SecurityKey GetSymmetricSecurityKey()
-        {
-            byte[] byteArrayToCreateSymmetricKey = Convert.FromBase64String(SecretKey);
-            return new SymmetricSecurityKey(byteArrayToCreateSymmetricKey);
-        }
-
-        public List<Claim> GetTokenClaims(string token)
-        {
-            if (string.IsNullOrWhiteSpace(token))
-                throw new ArgumentException("The provided token is null or empty.");
-
-            TokenValidationParameters tokenValidationParameters = GetTokenValidationParameters();
-
-            JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-
-            try
-            {
-                ClaimsPrincipal tokenValid = jwtSecurityTokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
-                return tokenValid.Claims.ToList();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
             }
         }
     }
