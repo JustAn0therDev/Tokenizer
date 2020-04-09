@@ -5,12 +5,11 @@ namespace Tokenizer.Models
 {
     public class JWTContainer : IAuthJWTContainerModel
     {
-        public JWTContainer(Claim[] claims)
+        public JWTContainer()
         {
             SecretKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
             SecurityAlgorithm = SecurityAlgorithms.HmacSha256Signature;
             ExpirationInMinutes = 10080; // One week
-            ArrayOfClaims = claims;
         }
 
         public string SecretKey { get; set; }

@@ -6,7 +6,6 @@ namespace Tokenizer.Services
     {
         string SecretKey { get; set; }
         IAuthJWTContainerModel JWTContainerModel { get; set; }
-        void IsClaimArrayValid();
         string GenerateToken();
     }
 }
