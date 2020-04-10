@@ -21,8 +21,7 @@ namespace Tokenizer
             do
             {
                 RunConsoleToAskForClaims();
-                Console.Clear();
-                Console.WriteLine("Press Escape to leave or any other key to run the program again");
+                ClearAndWriteOnConsole("Press Escape to leave or any other key to run the program again");
             }
             while (Console.ReadKey().Key != ConsoleKey.Escape);
         }
@@ -60,11 +59,16 @@ namespace Tokenizer
 
         private void WriteTokenOnConsole(string token)
         {
-            Console.Clear();
-            Console.WriteLine("Your token was successfully generated.");
-            Console.WriteLine();
+            ClearAndWriteOnConsole("Your token was successfully generated.");
             Console.WriteLine(token);
             Console.ReadKey();
+        }
+
+        private void ClearAndWriteOnConsole(string content)
+        {
+            Console.Clear();
+            Console.WriteLine(content);
+            Console.WriteLine();
         }
     }
 }

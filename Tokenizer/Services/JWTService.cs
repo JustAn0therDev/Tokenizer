@@ -56,32 +56,6 @@ namespace Tokenizer.Services
         {
             if (JWTContainerModel.ArrayOfClaims == null || JWTContainerModel.ArrayOfClaims.Length == 0)
                 throw new ArgumentNullException("A list of claims must be provided for a JWT token to be generated.");
-         
-            CheckAllClaimsInClaimArray();
-        }
-
-        private void CheckAllClaimsInClaimArray()
-        {
-            foreach (Claim claim in JWTContainerModel.ArrayOfClaims)
-            {
-                switch (claim.Type)
-                {
-                    case ClaimTypes.Email:
-                        if (!claim.Value.Contains("@"))
-                            throw new ArgumentException("Value is not valid for e-mail claim type.");
-                        break;
-                    case ClaimTypes.Name:
-                        if (string.IsNullOrWhiteSpace(claim.Value))
-                            throw new ArgumentException("Empty value is not valid for this claim type.");
-                        break;
-                    case ClaimTypes.Role:
-                        if (claim.Value.IndexOf(" ") > -1)
-                            throw new ArgumentException("Space separated value is not valid for role claim type.");
-                        break;
-                    default:
-                        throw new ArgumentException("ClaimType not supported for verification.");
-                }
-            }
         }
     }
 }
